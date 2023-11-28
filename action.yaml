@@ -1,0 +1,5 @@
+name: 'StartOS SDK'
+description: 'Provides start-sdk, start-cli, yq, and deno'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

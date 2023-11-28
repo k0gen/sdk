@@ -1,9 +1,10 @@
 FROM rust:slim
 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y git build-essential openssl libssl-dev libc6-dev clang libclang-dev ca-certificates curl && \
-    curl -o /usr/bin/yq https://github.com/mikefarah/yq/releases/download/v4.12.2/yq_linux_amd64 && \
-    chmod +x /usr/bin/yq
+    curl -sLo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && chmod +x /usr/local/bin/yq && \
+    curl -sS https://webi.sh/deno | sh
 
 WORKDIR /start-os
 RUN git clone https://github.com/Start9Labs/start-os.git --branch sdk . && \
