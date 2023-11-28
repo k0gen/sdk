@@ -3,7 +3,6 @@ FROM rust:slim
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y git build-essential openssl libssl-dev libc6-dev clang libclang-dev ca-certificates curl && \
-    # curl -sLo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && chmod +x /usr/local/bin/yq && \
     curl -sS https://webi.sh/yq | sh
 
 WORKDIR /start-os
@@ -13,6 +12,18 @@ RUN git clone https://github.com/Start9Labs/start-os.git --branch sdk . && \
     export RUSTFLAGS="" && \
     export OS_ARCH=$(uname -m) && \
     ./install-sdk.sh
+
+# Get the path to start-cli and start-sdk using which
+RUN SDK_PATH=$(which start-sdk) \
+    && echo "export PATH=\$PATH:$SDK_PATH" >> /etc/profile
+
+# Install Deno
+RUN curl -fsSL https://deno.land/x/install/install.sh | sh
+ENV DENO_INSTALL="/root/.deno"
+ENV PATH="$DENO_INSTALL/bin:$PATH"
+
+# Reload the profile to apply the changes
+RUN . /etc/profile
 
 WORKDIR /github/workspace
 
