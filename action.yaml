@@ -1,5 +1,55 @@
 name: 'StartOS SDK'
-description: 'Provides start-sdk, start-cli, yq, and deno'
+description: 'Provides start-sdk and start-cli'
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: 'composite'
+  steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git build-essential openssl libssl-dev libc6-dev clang libclang-dev ca-certificates curl
+        sudo snap install yq deno
+      shell: bash
+
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Checkout start-os
+      uses: actions/checkout@v2
+      with:
+        repository: Start9Labs/start-os
+        ref: sdk
+        submodules: recursive
+
+    - name: Cache start-sdk
+      uses: actions/cache@v2
+      id: cache
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-start-sdk-${{ hashFiles('**/install-sdk.sh') }}
+
+    - name: Install start-sdk
+      run: |
+        if [ -z "$(command -v start-sdk)" ]; then
+          export RUSTFLAGS=""
+          export OS_ARCH=$(uname -m)
+          cd backend
+          chmod +x ./install-sdk.sh
+          ./install-sdk.sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        fi
+      shell: bash
