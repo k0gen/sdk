@@ -17,11 +17,6 @@ RUN git clone https://github.com/Start9Labs/start-os.git --branch sdk . && \
 RUN SDK_PATH=$(which start-sdk) \
     && echo "export PATH=\$PATH:$SDK_PATH" >> /etc/profile
 
-# Install Deno
-RUN curl -fsSL https://deno.land/x/install/install.sh | sh
-ENV DENO_INSTALL="/root/.deno"
-ENV PATH="$DENO_INSTALL/bin:$PATH"
-
 # Reload the profile to apply the changes
 RUN . /etc/profile
 
