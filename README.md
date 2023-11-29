@@ -28,6 +28,27 @@ This will run the StartOS SDK action, which sets up the package development envi
 
 Please note that this action must be run on a runner that supports sudo, snap, and Docker, such as ubuntu-latest.
 
+## Drop-in Workflows
+
+This repository introduces a series of drop-in workflows designed to simplify the development process and ensure consistency and quality across all services. These workflows can be easily integrated into any service repository and will automate various stages of the development process.
+
+### [buildService.yml](buildService.yml)
+
+The `buildService.yml` workflow is a universal build service that provides a standardized way to build services. Once integrated, it will automatically trigger a Continuous Integration (CI) build on every commit or Pull Request (PR), eliminating the need for manual build triggers and saving valuable time and effort.
+
+### releaseService.yml ( 🚧 WIP 🚧 )
+
+The `releaseService.yml` workflow automates the release process of your service. Releasing a new version of your service is as simple as:
+
+```bash
+git tag v0.0.1
+git push origin v0.0.1
+```
+
+Make sure to change v0.0.1 accordingly to your service version. This will automatically trigger a package build based on the version tag. It will also automatically take the package’s manifest.yaml release-notes and compose a release message from it. In addition, it will build the `s9pk` package, generate a sha256 sum hash for the package inside the release note, and create a `.sha256` file.
+
+These workflows are designed to make the development and release process for your services as smooth and efficient as possible.
+
 ## Real-world Examples
 Here are some real-world examples of how this action can be used in a workflow:
 
