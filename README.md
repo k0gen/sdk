@@ -21,7 +21,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Use StartOS SDK
-      uses: k0gen/sdk@main
+      uses: Start9Labs/sdk@v1
 ```
 
 This will run the StartOS SDK action, which sets up the package development environment, installs start-sdk, and includes tools like yq and deno as part of your GitHub workflow.
