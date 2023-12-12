@@ -36,9 +36,10 @@ This repository introduces a series of drop-in workflows designed to simplify th
 
 The `buildService.yml` workflow is a universal build service that provides a standardized way to build StartOS packages. Once integrated, it will automatically trigger a Continuous Integration (CI) build on every commit or Pull Request (PR), eliminating the need for manual build triggers and saving valuable time and effort.
 
-### releaseService.yml ( 🚧 WIP 🚧 )
+### [releaseService.yml](releaseService.yml)
 
-The `releaseService.yml` workflow automates the release process of your service. Releasing a new version of your service is as simple as:
+The `releaseService.yml` workflow automates the release process of your service.
+Releasing a new version of your service is as simple as:
 
 ```bash
 git tag v0.0.1
@@ -46,6 +47,8 @@ git push origin v0.0.1
 ```
 
 Make sure to change `v0.0.1` accordingly to your service version. This will automatically trigger a package build based on the version tag. It will also automatically take the package’s manifest.yaml release-notes and compose a release message from it. In addition, it will build the `s9pk` package, generate a sha256 sum hash for the package inside the release note, and create a `.sha256` file.
+
+> This workflow includes a "Publish to Registry" step. To utilize this feature, ensure you've set the required registry credentials (`S9USER`, `S9PASS`, `S9REGISTRY`) as registry secrets. If credentials are missing, the workflow will gracefully skip the publish step.
 
 These workflows are designed to make the development and release process for your services as smooth and efficient as possible.
 
