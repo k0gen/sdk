@@ -48,9 +48,7 @@ runs:
         if [ -z "$(command -v start-sdk)" ]; then
           export RUSTFLAGS=""
           export OS_ARCH=$(uname -m)
-          cd backend
-          chmod +x ./install-sdk.sh
-          ./install-sdk.sh
+          make sdk
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         fi
       shell: bash
