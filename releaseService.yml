@@ -52,6 +52,7 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ steps.package.outputs.package_title }} ${{ github.ref_name }}
+          prerelease: true
           body_path: change-log.txt
           files: |
             ./${{ steps.package.outputs.package_id }}.s9pk
