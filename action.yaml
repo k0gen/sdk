@@ -31,14 +31,14 @@ runs:
       uses: docker/setup-buildx-action@v2
 
     - name: Checkout start-os
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: Start9Labs/start-os
         ref: sdk
         submodules: recursive
 
     - name: Cache start-sdk
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache
       with:
         path: |
