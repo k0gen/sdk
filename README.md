@@ -48,7 +48,7 @@ git push origin v0.0.1
 
 Make sure to change `v0.0.1` accordingly to your service version. This will automatically trigger a package build based on the version tag. It will also automatically take the package’s manifest.yaml release-notes and compose a release message from it. In addition, it will build the `s9pk` package, generate a sha256 sum hash for the package inside the release note, and create a `.sha256` file.
 
-> This workflow includes a "Publish to Registry" step. To utilize this feature, ensure you've set the required registry credentials (`S9USER`, `S9PASS`, `S9REGISTRY`) as registry secrets. If credentials are missing, the workflow will gracefully skip the publish step.
+> This workflow includes a "Publish to Registry" step. To utilize this feature, ensure you've set the required registry credentials (`S9USER`, `S9PASS`, `S9REGISTRY`) as registry secrets. **When setting up the `S9REGISTRY` secret, make sure you enter the registry address in the format `your-registry.example.com`. Do not include `https://` or any trailing `/`, just the plain address.** If any credentials are missing, the workflow will gracefully skip the publish step.
 
 These workflows are designed to make the development and release process for your services as smooth and efficient as possible.
 
