@@ -19,11 +19,9 @@ runs:
       shell: bash
 
     - name: Setup Rust
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        profile: minimal
         toolchain: stable
-        override: true
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
