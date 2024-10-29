@@ -64,7 +64,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache,new=true
 
       - name: Tag as latest if requested
-        if: ${{ inputs.publish_as_latest == 'true' }}
+        if: ${{ inputs.publish_as_latest }}
         run: |
           docker tag ghcr.io/start9labs/sdk/utils:${{ github.sha }} ghcr.io/start9labs/sdk/utils:latest
           docker push ghcr.io/start9labs/sdk/utils:latest
