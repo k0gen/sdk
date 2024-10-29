@@ -67,5 +67,7 @@ jobs:
       - name: Tag as latest if requested
         if: ${{ inputs.publish_as_latest }}
         run: |
-          docker manifest create ghcr.io/start9labs/sdk/utils:latest --amend ghcr.io/start9labs/sdk/utils@${{ steps.build_and_push.outputs.digest }}
+          docker manifest create ghcr.io/start9labs/sdk/utils:latest \
+            --amend ghcr.io/start9labs/sdk/utils:${{ github.sha }}-x86_64 \
+            --amend ghcr.io/start9labs/sdk/utils:${{ github.sha }}-aarch64
           docker manifest push ghcr.io/start9labs/sdk/utils:latest
