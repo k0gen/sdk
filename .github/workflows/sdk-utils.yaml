@@ -52,6 +52,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Build and push
+        id: build_and_push
         uses: docker/build-push-action@v6
         with:
           context: utils
@@ -64,7 +65,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache,new=true
 
       - name: Tag as latest if requested
-        if: ${{ inputs.publish_as_latest == 'true' }}
+        if: ${{ inputs.publish_as_latest }}
         run: |
-          docker tag ghcr.io/start9labs/sdk/utils:${{ github.sha }} ghcr.io/start9labs/sdk/utils:latest
-          docker push ghcr.io/start9labs/sdk/utils:latest
+          docker manifest create ghcr.io/start9labs/sdk/utils:latest --amend ghcr.io/start9labs/sdk/utils@${{ steps.build_and_push.outputs.digest }}
+          docker manifest push ghcr.io/start9labs/sdk/utils:latest
