@@ -59,6 +59,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
+            ghcr.io/start9labs/sdk/utils:${{ github.sha }}-amd64
+            ghcr.io/start9labs/sdk/utils:${{ github.sha }}-arm64
             ghcr.io/start9labs/sdk/utils:${{ github.sha }}
             ghcr.io/start9labs/sdk/utils:${{ github.run_number }}
           cache-from: type=local,src=/tmp/.buildx-cache
@@ -68,6 +70,6 @@ jobs:
         if: ${{ inputs.publish_as_latest }}
         run: |
           docker manifest create ghcr.io/start9labs/sdk/utils:latest \
-            --amend ghcr.io/start9labs/sdk/utils:${{ github.sha }}-x86_64 \
-            --amend ghcr.io/start9labs/sdk/utils:${{ github.sha }}-aarch64
+            --amend ghcr.io/start9labs/sdk/utils:${{ github.sha }}-amd64 \
+            --amend ghcr.io/start9labs/sdk/utils:${{ github.sha }}-arm64
           docker manifest push ghcr.io/start9labs/sdk/utils:latest
