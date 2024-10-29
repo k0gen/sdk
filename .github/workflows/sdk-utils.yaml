@@ -59,17 +59,17 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/start9labs/sdk/utils:${{ github.sha }}-amd64
-            ghcr.io/start9labs/sdk/utils:${{ github.sha }}-arm64
-            ghcr.io/start9labs/sdk/utils:${{ github.sha }}
-            ghcr.io/start9labs/sdk/utils:${{ github.run_number }}
+            ghcr.io/k0gen/sdk/utils:${{ github.sha }}-amd64
+            ghcr.io/k0gen/sdk/utils:${{ github.sha }}-arm64
+            ghcr.io/k0gen/sdk/utils:${{ github.sha }}
+            ghcr.io/k0gen/sdk/utils:${{ github.run_number }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,new=true
 
       - name: Tag as latest if requested
         if: ${{ inputs.publish_as_latest }}
         run: |
-          docker manifest create ghcr.io/start9labs/sdk/utils:latest \
-            --amend ghcr.io/start9labs/sdk/utils:${{ github.sha }}-amd64 \
-            --amend ghcr.io/start9labs/sdk/utils:${{ github.sha }}-arm64
-          docker manifest push ghcr.io/start9labs/sdk/utils:latest
+          docker manifest create ghcr.io/k0gen/sdk/utils:latest \
+            --amend ghcr.io/k0gen/sdk/utils:${{ github.sha }}-amd64 \
+            --amend ghcr.io/k0gen/sdk/utils:${{ github.sha }}-arm64
+          docker manifest push ghcr.io/k0gen/sdk/utils:latest
