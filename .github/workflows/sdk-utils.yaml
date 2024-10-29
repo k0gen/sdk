@@ -37,7 +37,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Cache Docker layers
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -51,23 +51,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Prepare tags
+        id: prep
+        run: |
+          TAGS="ghcr.io/start9labs/sdk/utils:${{ github.sha }},ghcr.io/start9labs/sdk/utils:${{ github.run_number }}"
+          if [[ "${{ inputs.publish_as_latest }}" == "true" ]]; then
+            TAGS="$TAGS,ghcr.io/start9labs/sdk/utils:latest"
+          fi
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+
       - name: Build and push
-        id: build_and_push
         uses: docker/build-push-action@v6
         with:
           context: utils
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ghcr.io/start9labs/sdk/utils:${{ github.sha }}
-            ghcr.io/start9labs/sdk/utils:${{ github.run_number }}
+          tags: ${{ steps.prep.outputs.tags }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,new=true
-
-      - name: Tag as latest if requested
-        if: ${{ inputs.publish_as_latest }}
-        run: |
-          docker manifest create ghcr.io/start9labs/sdk/utils:latest \
-            --amend ghcr.io/start9labs/sdk/utils:${{ github.sha }}-x86_64 \
-            --amend ghcr.io/start9labs/sdk/utils:${{ github.sha }}-aarch64
-          docker manifest push ghcr.io/start9labs/sdk/utils:latest
