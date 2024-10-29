@@ -54,9 +54,9 @@ jobs:
       - name: Prepare tags
         id: prep
         run: |
-          TAGS="ghcr.io/k0gen/sdk/utils:${{ github.sha }},ghcr.io/k0gen/sdk/utils:${{ github.run_number }}"
+          TAGS="ghcr.io/start9labs/sdk/utils:${{ github.sha }},ghcr.io/start9labs/sdk/utils:${{ github.run_number }}"
           if [[ "${{ inputs.publish_as_latest }}" == "true" ]]; then
-            TAGS="$TAGS,ghcr.io/k0gen/sdk/utils:latest"
+            TAGS="$TAGS,ghcr.io/start9labs/sdk/utils:latest"
           fi
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 
