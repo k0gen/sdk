@@ -50,26 +50,33 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Build and push
-        id: build_and_push
+
+      # Build and push amd64 image
+      - name: Build and push amd64 image
         uses: docker/build-push-action@v6
         with:
           context: utils
-          platforms: linux/amd64,linux/arm64
+          platform: linux/amd64
           push: true
           tags: |
             ghcr.io/k0gen/sdk/utils:${{ github.sha }}-amd64
-            ghcr.io/k0gen/sdk/utils:${{ github.sha }}-arm64
-            ghcr.io/k0gen/sdk/utils:${{ github.sha }}
-            ghcr.io/k0gen/sdk/utils:${{ github.run_number }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache,new=true
+            ghcr.io/k0gen/sdk/utils:${{ github.run_number }}-amd64
 
+      # Build and push arm64 image
+      - name: Build and push arm64 image
+        uses: docker/build-push-action@v6
+        with:
+          context: utils
+          platform: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/k0gen/sdk/utils:${{ github.sha }}-arm64
+            ghcr.io/k0gen/sdk/utils:${{ github.run_number }}-arm64
+
+      # Create a multi-platform manifest tagged as latest
       - name: Tag as latest if requested
         if: ${{ github.event.inputs.publish_as_latest }}
         run: |
-          # Create and push the manifest tagged as 'latest'
           docker manifest create ghcr.io/k0gen/sdk/utils:latest \
             --amend ghcr.io/k0gen/sdk/utils:${{ github.sha }}-amd64 \
             --amend ghcr.io/k0gen/sdk/utils:${{ github.sha }}-arm64
