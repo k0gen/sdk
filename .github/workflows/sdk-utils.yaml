@@ -67,8 +67,13 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache,new=true
 
       - name: Tag as latest if requested
-        if: ${{ inputs.publish_as_latest }}
+        if: ${{ github.event.inputs.publish_as_latest }}
         run: |
+          # Ensure SHA-tagged images are available locally
+          docker pull ghcr.io/k0gen/sdk/utils:${{ github.sha }}-amd64
+          docker pull ghcr.io/k0gen/sdk/utils:${{ github.sha }}-arm64
+          
+          # Create and push the manifest tagged as 'latest'
           docker manifest create ghcr.io/k0gen/sdk/utils:latest \
             --amend ghcr.io/k0gen/sdk/utils:${{ github.sha }}-amd64 \
             --amend ghcr.io/k0gen/sdk/utils:${{ github.sha }}-arm64
