@@ -33,7 +33,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: Start9Labs/start-os
-        ref: sdk
+        ref: next/minor
         submodules: recursive
 
     - name: Cache start-sdk
@@ -48,13 +48,13 @@ runs:
           target/
         key: ${{ runner.os }}-start-sdk-${{ hashFiles('**/install-sdk.sh') }}
 
-    - name: Install start-sdk
+    - name: Install start-cli
       run: |
-        if [ -z "$(command -v start-sdk)" ]; then
+        if [ -z "$(command -v start-cli)" ]; then
           export RUSTFLAGS=""
           export OS_ARCH=$(uname -m)
-          cargo update -p time --manifest-path=core/Cargo.toml
-          make sdk
+          cargo update -p time --manifest-path=cli/Cargo.toml
+          make cli
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         fi
       shell: bash
