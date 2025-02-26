@@ -1,12 +1,12 @@
-name: 'StartOS SDK'
-description: 'Provides start-sdk and start-cli'
+name: "StartOS SDK"
+description: "Provides start-sdk and start-cli"
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Setup Node.js environment
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: "20"
 
     - name: Install dependencies
       run: |
@@ -46,7 +46,7 @@ runs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-start-sdk-${{ hashFiles('**/install-sdk.sh') }}
+        key: ${{ runner.os }}-start-sdk-${{ hashFiles('**/install-cli.sh') }}
 
     - name: Install start-cli
       run: |
