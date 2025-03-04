@@ -43,10 +43,11 @@ runs:
         elif [ "$OS" = "darwin" ]; then
           OS_NAME="apple-darwin"
         fi
-        ASSET_NAME="start-cli-${ARCH_NAME}-${OS_NAME}.tar.gz"
+        BINARY_NAME="start-cli-${ARCH_NAME}-${OS_NAME}"
+        ASSET_NAME="${BINARY_NAME}.tar.gz"
         LATEST_RELEASE_URL=$(curl -s https://api.github.com/repos/Start9Labs/start-cli/releases/latest | jq -r '.assets[] | select(.name=="'$ASSET_NAME'") | .browser_download_url')
         curl -L $LATEST_RELEASE_URL -o start-cli.tar.gz
         tar xzf start-cli.tar.gz
-        sudo mv start-cli /usr/local/bin/
+        sudo mv $BINARY_NAME /usr/local/bin/start-cli
         rm start-cli.tar.gz
       shell: bash
