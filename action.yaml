@@ -21,7 +21,7 @@ runs:
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: 1.72.0
+        toolchain: 1.77.2
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
