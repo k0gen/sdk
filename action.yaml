@@ -21,7 +21,7 @@ runs:
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: 1.77.2
+        toolchain: latest
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
@@ -33,7 +33,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: Start9Labs/start-os
-        ref: sdk
+        ref: master
         submodules: recursive
 
     - name: Cache start-sdk
@@ -53,7 +53,6 @@ runs:
         if [ -z "$(command -v start-sdk)" ]; then
           export RUSTFLAGS=""
           export OS_ARCH=$(uname -m)
-          cargo update -p time --manifest-path=core/Cargo.toml
           make sdk
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         fi
