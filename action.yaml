@@ -33,7 +33,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: Start9Labs/start-os
-        ref: master
+        ref: sdk
         submodules: recursive
 
     - name: Cache start-sdk
