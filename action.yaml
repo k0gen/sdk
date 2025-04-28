@@ -6,7 +6,7 @@ runs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v4
       with:
-        node-version: "20"
+        node-version: "22"
 
     - name: Install dependencies
       run: |
@@ -33,7 +33,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: Start9Labs/start-os
-        ref: next/minor
+        ref: next/major
         submodules: recursive
 
     - name: Cache start-sdk
