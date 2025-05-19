@@ -54,7 +54,7 @@ runs:
           export RUSTFLAGS=""
           export OS_ARCH=$(uname -m)
           cargo update -p time --manifest-path=core/Cargo.toml
-          make cli
+          make sdk
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         fi
       shell: bash
