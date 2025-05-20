@@ -57,7 +57,18 @@ git push origin v0.0.1
 
 Make sure to change `v0.0.1` accordingly to your service version. This will automatically trigger a package build based on the version tag. It will also automatically take the package's manifest.yaml release-notes and compose a release message from it. In addition, it will build the `s9pk` package, generate a sha256 sum hash for the package inside the release note, and create a `.sha256` file.
 
-> This workflow includes a "Publish to Registry" step. To utilize this feature, ensure you've set the required registry credentials (`S9USER`, `S9PASS`, `S9REGISTRY`) as registry secrets. **When setting up the `S9REGISTRY` secret, make sure you enter the registry address in the format `your-registry.example.com`. Do not include `https://` or any trailing `/`, just the plain address.** If any credentials are missing, the workflow will gracefully skip the publish step.
+> This workflow includes a "Publish to Registry" step. To utilize this feature, ensure you've set the required registry credentials as GitHub secrets:
+>
+> - `S9DEVKEY`: Your StartOS developer private key (the entire key including BEGIN and END lines). This key is typically found at `~/.startos/developer.key.pem` on your local development machine. The content should look like:
+>   ```
+>   -----BEGIN PRIVATE KEY-----
+>   MFECAQEwBQYDK2VwBCIEICpqAbMjPAY9mwepR6GRACtYkWvGVxh0TePJdF3m2apY
+>   gSEAK1DVeOiw6/M4Ss6kS65PvPMopKL/tF6fIJPhTQ8MO2Q=
+>   -----END PRIVATE KEY-----
+>   ```
+> - `S9REGISTRY`: The registry address in the format `your-registry.example.com` (do not include `https://` or any trailing `/`)
+>
+> The workflow uses key-based authentication with the registry. If any credentials are missing, the workflow will gracefully skip the publish step.
 
 These workflows are designed to make the development and release process for your services as smooth and efficient as possible.
 
