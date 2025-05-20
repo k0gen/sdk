@@ -1,21 +1,23 @@
-name: 'StartOS SDK'
-description: 'Provides start-cli'
+name: "StartOS SDK"
+description: "Provides start-cli"
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Setup Node.js environment
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: "22"
 
     - name: Install dependencies
       run: |
-        sudo rm /etc/apt/sources.list.d/microsoft-prod.list
+        sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list
         sudo apt-get update
-        sudo apt-get install -y git build-essential openssl libssl-dev libc6-dev clang libclang-dev ca-certificates curl jq squashfs-tools squashfs-tools-ng sed grep gawk jq gzip brotli qemu-user-static
-        # sudo snap install yq deno
-        # cargo install --force toml-cli web-static-pack-packer
-        # cargo install --git=https://github.com/Start9Labs/md-packer.git --branch=main
+        sudo apt-get install -y --no-install-recommends \
+          build-essential \
+          clang \
+          libclang-dev \
+          squashfs-tools-ng \
+          qemu-user-static
       shell: bash
 
     - name: Setup Rust
