@@ -60,12 +60,16 @@ Make sure to change `v0.0.1` accordingly to your service version. This will auto
 > This workflow includes a "Publish to Registry" step. To utilize this feature, ensure you've set the required registry credentials as GitHub secrets:
 >
 > - `S9DEVKEY`: Your StartOS developer private key (the entire key including BEGIN and END lines). This key is typically found at `~/.startos/developer.key.pem` on your local development machine. The content should look like:
+>
 >   ```
 >   -----BEGIN PRIVATE KEY-----
 >   MFECAQEwBQYDK2VwBCIEICpqAbMjPAY9mwepR6GRACtYkWvGVxh0TePJdF3m2apY
 >   gSEAK1DVeOiw6/M4Ss6kS65PvPMopKL/tF6fIJPhTQ8MO2Q=
 >   -----END PRIVATE KEY-----
 >   ```
+>
+>   > 💡 **Tip for macOS users**: You can easily copy the key to your clipboard by running `pbcopy < ~/.startos/developer.key.pem` in your terminal.
+>
 > - `S9REGISTRY`: The registry address in the format `your-registry.example.com` (do not include `https://` or any trailing `/`)
 >
 > The workflow uses key-based authentication with the registry. If any credentials are missing, the workflow will gracefully skip the publish step.
