@@ -8,23 +8,34 @@ runs:
       with:
         node-version: "22"
 
-    - name: Cache system dependencies (safe paths)
+    - name: Cache APT packages
       uses: actions/cache@v4
-      id: cache-system-deps
+      id: cache-apt
       with:
         path: |
-          /var/cache/apt/archives/*.deb
-          /var/lib/apt/lists/*.gz
-          /var/lib/apt/lists/*Release*
-        key: ${{ runner.os }}-${{ runner.arch }}-system-deps-${{ hashFiles('/etc/apt/sources.list', '/etc/apt/sources.list.d/*') }}
+          ~/.cache/apt-archives
+        key: ${{ runner.os }}-${{ runner.arch }}-apt-${{ hashFiles('**/apt-packages.txt', '/etc/apt/sources.list') }}
         restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-system-deps-
+          ${{ runner.os }}-${{ runner.arch }}-apt-
 
     - name: Install system dependencies
-      if: steps.cache-system-deps.outputs.cache-hit != 'true'
       run: |
+        # Create cache directory for APT packages
+        mkdir -p ~/.cache/apt-archives
+
+        # Configure APT to use our cache
+        sudo tee /etc/apt/apt.conf.d/99cache > /dev/null <<EOF
+        Dir::Cache::Archives "$(echo $HOME)/.cache/apt-archives";
+        EOF
+
+        # Clean up any problematic sources
+        sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list
+
         sudo apt-get update
-        sudo apt-get install -y --no-install-recommends squashfs-tools-ng
+        sudo apt-get install -y --no-install-recommends \
+          squashfs-tools-ng \
+          build-essential \
+          qemu-user-static
       shell: bash
 
     - name: Setup Rust with caching
@@ -32,44 +43,66 @@ runs:
       with:
         toolchain: stable
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        platforms: linux/amd64,linux/arm64
+
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
       with:
         platforms: linux/amd64,linux/arm64
-        cache-image: true
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        cache-binary: true
 
     - name: Cache start-cli binary
       uses: actions/cache@v4
       id: cache-start-cli
       with:
-        path: /usr/local/bin/start-cli
-        key: start-cli-${{ runner.arch }}-${{ runner.os }}
+        path: ~/.local/bin/start-cli
+        key: start-cli-${{ hashFiles('**/start-cli-version.txt') }}-${{ runner.arch }}-${{ runner.os }}
+        restore-keys: |
+          start-cli-${{ runner.arch }}-${{ runner.os }}
 
     - name: Install start-cli
       if: steps.cache-start-cli.outputs.cache-hit != 'true'
       run: |
+        # Create local bin directory
+        mkdir -p ~/.local/bin
+
+        # Detect architecture and OS
         ARCH=$(uname -m)
         OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-        if [ "$ARCH" = "x86_64" ]; then
-          ARCH_NAME="x86_64"
-        elif [ "$ARCH" = "aarch64" ]; then
-          ARCH_NAME="aarch64"
-        fi
-        if [ "$OS" = "linux" ]; then
-          OS_NAME="unknown-linux-gnu"
-        elif [ "$OS" = "darwin" ]; then
-          OS_NAME="apple-darwin"
-        fi
+
+        case "$ARCH" in
+          x86_64) ARCH_NAME="x86_64" ;;
+          aarch64|arm64) ARCH_NAME="aarch64" ;;
+          *) echo "Unsupported architecture: $ARCH" && exit 1 ;;
+        esac
+
+        case "$OS" in
+          linux) OS_NAME="unknown-linux-gnu" ;;
+          darwin) OS_NAME="apple-darwin" ;;
+          *) echo "Unsupported OS: $OS" && exit 1 ;;
+        esac
+
         BINARY_NAME="start-cli-${ARCH_NAME}-${OS_NAME}"
         ASSET_NAME="${BINARY_NAME}.tar.gz"
-        LATEST_RELEASE_URL=$(curl -s https://api.github.com/repos/Start9Labs/start-cli/releases/latest | jq -r '.assets[] | select(.name=="'$ASSET_NAME'") | .browser_download_url')
-        curl -L $LATEST_RELEASE_URL -o start-cli.tar.gz
+
+        # Download and install
+        echo "Downloading start-cli for ${ARCH_NAME}-${OS_NAME}..."
+        LATEST_RELEASE_URL=$(curl -s https://api.github.com/repos/Start9Labs/start-cli/releases/latest | \
+          jq -r --arg name "$ASSET_NAME" '.assets[] | select(.name==$name) | .browser_download_url')
+
+        if [ -z "$LATEST_RELEASE_URL" ] || [ "$LATEST_RELEASE_URL" = "null" ]; then
+          echo "Failed to find download URL for $ASSET_NAME"
+          exit 1
+        fi
+
+        curl -fL "$LATEST_RELEASE_URL" -o start-cli.tar.gz
         tar xzf start-cli.tar.gz
-        sudo mv $BINARY_NAME /usr/local/bin/start-cli
+        mv "$BINARY_NAME" ~/.local/bin/start-cli
+        chmod +x ~/.local/bin/start-cli
         rm start-cli.tar.gz
+
+        # Add to PATH for subsequent steps
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
       shell: bash
