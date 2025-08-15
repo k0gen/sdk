@@ -24,10 +24,7 @@ runs:
       if: steps.cache-system-deps.outputs.cache-hit != 'true'
       run: |
 
-        sudo apt-get install -y --no-install-recommends \
-
-          squashfs-tools-ng
-
+        sudo apt-get install -y --no-install-recommends squashfs-tools-ng
       shell: bash
 
     - name: Setup Rust with caching
