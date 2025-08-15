@@ -1,5 +1,5 @@
 name: "StartOS SDK"
-description: "Provides start-cli"
+description: "Provides start-cli and dependencies with optimized caching"
 runs:
   using: "composite"
   steps:
@@ -8,7 +8,25 @@ runs:
       with:
         node-version: "22"
 
-    - name: Install dependencies
+    - name: Cache Node.js dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Cache system packages
+      uses: actions/cache@v4
+      id: cache-apt
+      with:
+        path: /var/cache/apt
+        key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list.d/*') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-
+
+    - name: Install system dependencies
+      if: steps.cache-apt.outputs.cache-hit != 'true'
       run: |
         sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list
         sudo apt-get update
@@ -20,21 +38,31 @@ runs:
           qemu-user-static
       shell: bash
 
-    - name: Setup Rust
+    - name: Setup Rust with caching
       uses: dtolnay/rust-toolchain@stable
       with:
         toolchain: stable
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
-
-    - name: Set up Docker
-      uses: docker/setup-docker-action@v4
+      with:
+        platforms: linux/amd64,linux/arm64
+        cache-image: true
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        cache-binary: true
+
+    - name: Cache start-cli binary
+      uses: actions/cache@v4
+      id: cache-start-cli
+      with:
+        path: /usr/local/bin/start-cli
+        key: start-cli-${{ runner.arch }}-${{ runner.os }}
 
     - name: Install start-cli
+      if: steps.cache-start-cli.outputs.cache-hit != 'true'
       run: |
         ARCH=$(uname -m)
         OS=$(uname -s | tr '[:upper:]' '[:lower:]')
