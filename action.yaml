@@ -23,14 +23,11 @@ runs:
     - name: Install system dependencies
       if: steps.cache-system-deps.outputs.cache-hit != 'true'
       run: |
-        sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list
-        sudo apt-get update
+
         sudo apt-get install -y --no-install-recommends \
-          build-essential \
-          clang \
-          libclang-dev \
-          squashfs-tools-ng \
-          qemu-user-static
+
+          squashfs-tools-ng
+
       shell: bash
 
     - name: Setup Rust with caching
