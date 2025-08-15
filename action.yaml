@@ -8,14 +8,14 @@ runs:
       with:
         node-version: "22"
 
-    # More effective system dependencies caching
-    - name: Cache system dependencies
+    - name: Cache system dependencies (safe paths)
       uses: actions/cache@v4
       id: cache-system-deps
       with:
         path: |
-          /var/cache/apt/archives
-          /var/lib/apt/lists
+          /var/cache/apt/archives/*.deb
+          /var/lib/apt/lists/*.gz
+          /var/lib/apt/lists/*Release*
         key: ${{ runner.os }}-${{ runner.arch }}-system-deps-${{ hashFiles('/etc/apt/sources.list', '/etc/apt/sources.list.d/*') }}
         restore-keys: |
           ${{ runner.os }}-${{ runner.arch }}-system-deps-
@@ -23,7 +23,7 @@ runs:
     - name: Install system dependencies
       if: steps.cache-system-deps.outputs.cache-hit != 'true'
       run: |
-
+        sudo apt-get update
         sudo apt-get install -y --no-install-recommends squashfs-tools-ng
       shell: bash
 
