@@ -8,34 +8,45 @@ runs:
       with:
         node-version: "22"
 
-    - name: Cache APT packages
+    - name: Cache APT packages only (safe)
       uses: actions/cache@v4
-      id: cache-apt
+      id: cache-apt-packages
       with:
         path: |
-          ~/.cache/apt-archives
-        key: ${{ runner.os }}-${{ runner.arch }}-apt-${{ hashFiles('**/apt-packages.txt', '/etc/apt/sources.list') }}
+          ~/apt-cache/*.deb
+        key: ${{ runner.os }}-${{ runner.arch }}-apt-packages-${{ hashFiles('**/packages.list') }}
         restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-apt-
+          ${{ runner.os }}-${{ runner.arch }}-apt-packages-
 
     - name: Install system dependencies
       run: |
-        # Create cache directory for APT packages
-        mkdir -p ~/.cache/apt-archives
-
-        # Configure APT to use our cache
-        sudo tee /etc/apt/apt.conf.d/99cache > /dev/null <<EOF
-        Dir::Cache::Archives "$(echo $HOME)/.cache/apt-archives";
-        EOF
+        # Create cache directory for downloaded packages
+        mkdir -p ~/apt-cache
 
         # Clean up any problematic sources
         sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list
 
+        # Update package lists
         sudo apt-get update
-        sudo apt-get install -y --no-install-recommends \
-          squashfs-tools-ng \
-          build-essential \
-          qemu-user-static
+
+        # Download packages to our cache directory if not cached
+        if [ "${{ steps.cache-apt-packages.outputs.cache-hit }}" != "true" ]; then
+          cd ~/apt-cache
+          sudo apt-get download squashfs-tools-ng build-essential qemu-user-static
+        fi
+
+        # Install from cache or directly
+        if [ -f ~/apt-cache/*.deb ]; then
+          sudo dpkg -i ~/apt-cache/*.deb || sudo apt-get install -f -y
+        else
+          sudo apt-get install -y --no-install-recommends \
+            squashfs-tools-ng \
+            build-essential \
+            qemu-user-static
+        fi
+
+        # Clean up to avoid permission issues
+        sudo apt-get clean
       shell: bash
 
     - name: Setup Rust with caching
@@ -58,7 +69,7 @@ runs:
       id: cache-start-cli
       with:
         path: ~/.local/bin/start-cli
-        key: start-cli-${{ hashFiles('**/start-cli-version.txt') }}-${{ runner.arch }}-${{ runner.os }}
+        key: start-cli-${{ runner.arch }}-${{ runner.os }}-${{ hashFiles('**/start-cli.version') }}
         restore-keys: |
           start-cli-${{ runner.arch }}-${{ runner.os }}
 
