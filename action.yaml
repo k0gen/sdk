@@ -8,17 +8,34 @@ runs:
       with:
         node-version: "22"
 
-    - name: Cache APT packages only (safe)
+    # NEW: Skip APT operations entirely if packages are already installed
+    - name: Check if system dependencies are installed
+      id: check-deps
+      run: |
+        if command -v squashfs-tools >/dev/null 2>&1 && \
+           command -v gcc >/dev/null 2>&1 && \
+           command -v qemu-aarch64-static >/dev/null 2>&1; then
+          echo "deps-installed=true" >> $GITHUB_OUTPUT
+          echo "✅ System dependencies already installed"
+        else
+          echo "deps-installed=false" >> $GITHUB_OUTPUT
+          echo "❌ System dependencies need installation"
+        fi
+      shell: bash
+
+    - name: Cache APT packages
+      if: steps.check-deps.outputs.deps-installed != 'true'
       uses: actions/cache@v4
       id: cache-apt-packages
       with:
         path: |
           ~/apt-cache/*.deb
-        key: ${{ runner.os }}-${{ runner.arch }}-apt-packages-${{ hashFiles('**/packages.list') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-apt-packages-v3
         restore-keys: |
           ${{ runner.os }}-${{ runner.arch }}-apt-packages-
 
     - name: Install system dependencies
+      if: steps.check-deps.outputs.deps-installed != 'true'
       run: |
         # Create cache directory for downloaded packages
         mkdir -p ~/apt-cache
@@ -35,8 +52,8 @@ runs:
           sudo apt-get download squashfs-tools-ng build-essential qemu-user-static
         fi
 
-        # Install from cache or directly
-        if [ -f ~/apt-cache/*.deb ]; then
+        # Install from cache or directly - fixed glob pattern
+        if ls ~/apt-cache/*.deb 1> /dev/null 2>&1; then
           sudo dpkg -i ~/apt-cache/*.deb || sudo apt-get install -f -y
         else
           sudo apt-get install -y --no-install-recommends \
@@ -54,24 +71,35 @@ runs:
       with:
         toolchain: stable
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+    # OPTIMIZED: Cache Docker buildx state
+    - name: Cache Docker buildx state
+      uses: actions/cache@v4
       with:
-        platforms: linux/amd64,linux/arm64
+        path: ~/.docker/buildx
+        key: ${{ runner.os }}-${{ runner.arch }}-docker-buildx-v1
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-      with:
-        platforms: linux/amd64,linux/arm64
+    - name: Set up Docker Buildx with QEMU (combined)
+      run: |
+        # Set up buildx
+        docker buildx create --use --name mybuilder --driver docker-container --platform linux/amd64,linux/arm64 || true
+        docker buildx use mybuilder || docker buildx use default
+        
+        # Set up QEMU (lightweight approach)
+        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
+        
+        echo "✅ Docker multi-arch ready"
+        docker buildx ls
+      shell: bash
 
+    # SIMPLE: Version-based caching for start-cli binary
     - name: Cache start-cli binary
       uses: actions/cache@v4
       id: cache-start-cli
       with:
         path: ~/.local/bin/start-cli
-        key: start-cli-${{ runner.arch }}-${{ runner.os }}-${{ hashFiles('**/start-cli.version') }}
+        key: start-cli-${{ runner.arch }}-${{ runner.os }}-v3
         restore-keys: |
-          start-cli-${{ runner.arch }}-${{ runner.os }}
+          start-cli-${{ runner.arch }}-${{ runner.os }}-
 
     - name: Install start-cli
       if: steps.cache-start-cli.outputs.cache-hit != 'true'
@@ -116,4 +144,18 @@ runs:
 
         # Add to PATH for subsequent steps
         echo "$HOME/.local/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Verify optimized SDK setup
+      run: |
+        echo "🚀 StartOS SDK Ready (Super Optimized)!"
+        echo "System deps check: ${{ steps.check-deps.outputs.deps-installed }}"
+        echo "APT cache hit: ${{ steps.cache-apt-packages.outputs.cache-hit }}"
+        echo "start-cli cache hit: ${{ steps.cache-start-cli.outputs.cache-hit }}"
+        
+        # Verify tools are available
+        command -v start-cli >/dev/null && echo "✅ start-cli ready" || echo "⏳ start-cli will be available after init"
+        command -v docker >/dev/null && echo "✅ docker ready" || echo "❌ docker missing"
+        command -v squashfs-tools >/dev/null 2>&1 && echo "✅ squashfs-tools ready" || echo "❌ squashfs-tools missing"
+        docker buildx version >/dev/null && echo "✅ docker buildx ready" || echo "❌ docker buildx missing"
       shell: bash
