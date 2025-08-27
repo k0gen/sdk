@@ -8,11 +8,11 @@ runs:
       with:
         node-version: "22"
 
-    # NEW: Skip APT operations entirely if packages are already installed
+    # FIXED: Check for correct package names and binaries
     - name: Check if system dependencies are installed
       id: check-deps
       run: |
-        if command -v squashfs-tools >/dev/null 2>&1 && \
+        if command -v gensquashfs >/dev/null 2>&1 && \
            command -v gcc >/dev/null 2>&1 && \
            command -v qemu-aarch64-static >/dev/null 2>&1; then
           echo "deps-installed=true" >> $GITHUB_OUTPUT
@@ -30,10 +30,11 @@ runs:
       with:
         path: |
           ~/apt-cache/*.deb
-        key: ${{ runner.os }}-${{ runner.arch }}-apt-packages-v3
+        key: ${{ runner.os }}-${{ runner.arch }}-apt-packages-v4
         restore-keys: |
           ${{ runner.os }}-${{ runner.arch }}-apt-packages-
 
+    # FIXED: Better APT package handling with proper dependency resolution
     - name: Install system dependencies
       if: steps.check-deps.outputs.deps-installed != 'true'
       run: |
@@ -46,21 +47,32 @@ runs:
         # Update package lists
         sudo apt-get update
 
-        # Download packages to our cache directory if not cached
+        # Download packages with dependencies if not cached
         if [ "${{ steps.cache-apt-packages.outputs.cache-hit }}" != "true" ]; then
           cd ~/apt-cache
-          sudo apt-get download squashfs-tools-ng build-essential qemu-user-static
+          # Download packages and their dependencies
+          sudo apt-get download squashfs-tools-ng libsquashfs1 build-essential qemu-user-static
         fi
 
-        # Install from cache or directly - fixed glob pattern
+        # Install packages with proper dependency resolution
         if ls ~/apt-cache/*.deb 1> /dev/null 2>&1; then
-          sudo dpkg -i ~/apt-cache/*.deb || sudo apt-get install -f -y
+          # Install all packages at once to resolve dependencies properly
+          sudo dpkg -i ~/apt-cache/*.deb || true
+          # Fix any broken dependencies
+          sudo apt-get install -f -y
         else
+          # Install directly with automatic dependency resolution
           sudo apt-get install -y --no-install-recommends \
             squashfs-tools-ng \
             build-essential \
             qemu-user-static
         fi
+
+        # Verify installation
+        echo "Verifying installations:"
+        command -v gensquashfs && echo "✅ squashfs-tools-ng installed" || echo "❌ squashfs-tools-ng missing"
+        command -v gcc && echo "✅ build-essential installed" || echo "❌ build-essential missing"
+        command -v qemu-aarch64-static && echo "✅ qemu-user-static installed" || echo "❌ qemu-user-static missing"
 
         # Clean up to avoid permission issues
         sudo apt-get clean
@@ -71,24 +83,40 @@ runs:
       with:
         toolchain: stable
 
-    # OPTIMIZED: Cache Docker buildx state
+    # FIXED: Improved Docker setup with proper platform handling
     - name: Cache Docker buildx state
       uses: actions/cache@v4
       with:
         path: ~/.docker/buildx
-        key: ${{ runner.os }}-${{ runner.arch }}-docker-buildx-v1
+        key: ${{ runner.os }}-${{ runner.arch }}-docker-buildx-v2
 
-    - name: Set up Docker Buildx with QEMU (combined)
+    - name: Set up Docker Buildx with QEMU (platform-aware)
       run: |
-        # Set up buildx
-        docker buildx create --use --name mybuilder --driver docker-container --platform linux/amd64,linux/arm64 || true
-        docker buildx use mybuilder || docker buildx use default
+        # Detect current platform
+        CURRENT_ARCH=$(uname -m)
+        echo "Current architecture: $CURRENT_ARCH"
         
-        # Set up QEMU (lightweight approach)
-        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
+        # Set up buildx with appropriate driver
+        docker buildx create --use --name mybuilder --driver docker-container --platform linux/amd64,linux/arm64 2>/dev/null || true
+        docker buildx use mybuilder 2>/dev/null || docker buildx use default
         
-        echo "✅ Docker multi-arch ready"
+        # Platform-specific QEMU setup
+        if [ "$CURRENT_ARCH" = "x86_64" ]; then
+          echo "Setting up QEMU for x86_64 host..."
+          docker run --rm --privileged --platform linux/amd64 multiarch/qemu-user-static --reset -p yes || true
+        elif [ "$CURRENT_ARCH" = "aarch64" ] || [ "$CURRENT_ARCH" = "arm64" ]; then
+          echo "Setting up QEMU for ARM64 host..."
+          docker run --rm --privileged --platform linux/arm64 multiarch/qemu-user-static --reset -p yes || true
+        else
+          echo "Unknown architecture, trying generic setup..."
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes || true
+        fi
+        
+        echo "✅ Docker multi-arch setup complete"
         docker buildx ls
+        
+        # Test multi-arch capability
+        docker buildx inspect --bootstrap || echo "Buildx bootstrap completed with warnings"
       shell: bash
 
     # SIMPLE: Version-based caching for start-cli binary
@@ -148,7 +176,7 @@ runs:
 
     - name: Verify optimized SDK setup
       run: |
-        echo "🚀 StartOS SDK Ready (Super Optimized)!"
+        echo "🚀 StartOS SDK Ready (Fixed & Optimized)!"
         echo "System deps check: ${{ steps.check-deps.outputs.deps-installed }}"
         echo "APT cache hit: ${{ steps.cache-apt-packages.outputs.cache-hit }}"
         echo "start-cli cache hit: ${{ steps.cache-start-cli.outputs.cache-hit }}"
@@ -156,6 +184,9 @@ runs:
         # Verify tools are available
         command -v start-cli >/dev/null && echo "✅ start-cli ready" || echo "⏳ start-cli will be available after init"
         command -v docker >/dev/null && echo "✅ docker ready" || echo "❌ docker missing"
-        command -v squashfs-tools >/dev/null 2>&1 && echo "✅ squashfs-tools ready" || echo "❌ squashfs-tools missing"
-        docker buildx version >/dev/null && echo "✅ docker buildx ready" || echo "❌ docker buildx missing"
+        command -v gensquashfs >/dev/null 2>&1 && echo "✅ squashfs-tools-ng ready" || echo "❌ squashfs-tools-ng missing"
+        docker buildx version >/dev/null 2>&1 && echo "✅ docker buildx ready" || echo "❌ docker buildx missing"
+        
+        echo "Architecture: $(uname -m)"
+        echo "Platform: $(uname -s)"
       shell: bash
