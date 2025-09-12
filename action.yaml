@@ -146,7 +146,7 @@ runs:
         esac
 
         case "$OS" in
-          linux) OS_NAME="unknown-linux-gnu" ;;
+          linux) OS_NAME="unknown-linux-musl" ;;
           darwin) OS_NAME="apple-darwin" ;;
           *) echo "Unsupported OS: $OS" && exit 1 ;;
         esac
