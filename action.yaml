@@ -44,7 +44,7 @@ runs:
           ARCH_NAME="aarch64"
         fi
         if [ "$OS" = "linux" ]; then
-          OS_NAME="unknown-linux-gnu"
+          OS_NAME="unknown-linux-musl"
         elif [ "$OS" = "darwin" ]; then
           OS_NAME="apple-darwin"
         fi
