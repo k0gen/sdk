@@ -13,7 +13,9 @@ runs:
         sudo rm /etc/apt/sources.list.d/microsoft-prod.list
         sudo apt-get update
         sudo apt-get install -y git build-essential openssl libssl-dev libc6-dev clang libclang-dev ca-certificates curl
-        sudo snap install yq deno
+        curl -sS https://webi.sh/yq | sh
+        curl -sS https://webi.sh/deno | sh
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
         cargo install --force toml-cli web-static-pack-packer
         cargo install --git=https://github.com/Start9Labs/md-packer.git --branch=main
       shell: bash
