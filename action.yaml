@@ -48,7 +48,7 @@ runs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-        key: ${{ runner.os }}-start-sdk-${{ hashFiles('**/install-sdk.sh') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-start-sdk-${{ hashFiles('**/install-sdk.sh') }}
 
     - name: Install start-sdk
       run: |
